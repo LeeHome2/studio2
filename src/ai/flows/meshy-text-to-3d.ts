@@ -55,10 +55,19 @@ const meshyTextTo3DFlow = ai.defineFlow(
       throw new Error(`Meshy API error (create): ${createResponse.statusText} - ${errorText}`);
     }
 
-    const { task_id: taskId } = await createResponse.json();
+    const createPayload = await createResponse.json();
+    const taskId =
+      createPayload?.task_id ??
+      createPayload?.taskId ??
+      createPayload?.id ??
+      createPayload?.data?.task_id ??
+      createPayload?.data?.taskId ??
+      createPayload?.data?.id;
 
     if (!taskId) {
-      throw new Error('Meshy API did not return a task_id.');
+      throw new Error(
+        `Meshy API did not return a task identifier. Raw response: ${JSON.stringify(createPayload)}`,
+      );
     }
 
     // Poll for result
@@ -79,7 +88,7 @@ const meshyTextTo3DFlow = ai.defineFlow(
       }
       
       result = await checkResponse.json();
-      status = result.status;
+      status = result.status ?? result.state ?? result.task_status;
     }
 
     if (status === 'SUCCEEDED') {
