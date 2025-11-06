@@ -75,7 +75,10 @@ const meshyTextTo3DFlow = ai.defineFlow(
     let status = 'IN_PROGRESS';
     let result;
 
-    while (status === 'IN_PROGRESS' || status === 'PENDING') {
+    const maxRetries = 24; // 2 minutes
+    let retries = 0;
+
+    while ((status === 'IN_PROGRESS' || status === 'PENDING') && retries < maxRetries) {
       await sleep(5000); // Wait for 5 seconds before checking again
       const checkResponse = await fetch(`https://api.meshy.ai/v2/text-to-3d/${taskId}`, {
         headers: {
@@ -85,26 +88,31 @@ const meshyTextTo3DFlow = ai.defineFlow(
 
       if (!checkResponse.ok) {
         const errorText = await checkResponse.text();
-        throw new Error(`Meshy API error (check): ${checkResponse.statusText} - ${errorText}`);
+        // Don't throw here, maybe it's a temp issue, we will let the loop retry
+        console.error(`Meshy API error (check): ${checkResponse.statusText} - ${errorText}`);
+      } else {
+        result = await checkResponse.json();
+        status = result.status ?? result.state ?? result.task_status;
       }
-      
-      result = await checkResponse.json();
-      status = result.status ?? result.state ?? result.task_status;
+      retries++;
     }
-
+    
     if (status === 'SUCCEEDED') {
-      const modelUrl = result.model_urls?.glb;
+      const modelUrl = result?.model_urls?.glb;
 
       if (!modelUrl) {
-        throw new Error('Meshy task succeeded but no GLB model URL was returned.');
+        throw new Error(`Meshy task succeeded but no GLB model URL was returned. Full response: ${JSON.stringify(result)}`);
       }
 
       return {
         modelUrl,
         taskId,
       };
+    } else if (retries >= maxRetries) {
+      throw new Error(`Meshy task timed out after ${maxRetries * 5} seconds. Last status: ${status}`);
     } else {
-      throw new Error(`Meshy task failed with status: ${status}. Reason: ${result.error?.message}`);
+      const reason = result?.error?.message || JSON.stringify(result);
+      throw new Error(`Meshy task failed with status: ${status}. Reason: ${reason}`);
     }
   }
 );
