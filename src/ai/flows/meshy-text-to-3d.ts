@@ -62,12 +62,7 @@ const meshyTextTo3DFlow = ai.defineFlow(
       createPayload?.id ??
       createPayload?.data?.task_id ??
       createPayload?.data?.taskId ??
-      createPayload?.data?.id ??
-      (typeof createPayload?.result === 'string'
-        ? createPayload.result
-        : createPayload?.result?.task_id ??
-          createPayload?.result?.taskId ??
-          createPayload?.result?.id);
+      createPayload?.data?.id;
 
     if (!taskId) {
       throw new Error(
