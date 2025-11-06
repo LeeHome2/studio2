@@ -4,7 +4,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const MeshyTextTo3DInputSchema = z.object({
   prompt: z.string().describe('The text prompt for 3D model generation.'),
@@ -37,7 +37,7 @@ const meshyTextTo3DFlow = ai.defineFlow(
     }
 
     // Create task
-    const createResponse = await fetch('https://api.meshy.ai/v1/text-to-3d', {
+    const createResponse = await fetch('https://api.meshy.ai/v2/text-to-texture', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.MESHY_API_KEY}`,
@@ -45,6 +45,9 @@ const meshyTextTo3DFlow = ai.defineFlow(
       },
       body: JSON.stringify({
         prompt: input.prompt,
+        object_prompt: "a keychain",
+        style_prompt: "a keychain",
+        art_style: 'realistic',
         mode: 'preview', // or 'refine'
       }),
     });
@@ -62,7 +65,7 @@ const meshyTextTo3DFlow = ai.defineFlow(
 
     while (status === 'IN_PROGRESS' || status === 'PENDING') {
       await sleep(5000); // Wait for 5 seconds before checking again
-      const checkResponse = await fetch(`https://api.meshy.ai/v1/text-to-3d/${taskId}`, {
+      const checkResponse = await fetch(`https://api.meshy.ai/v2/text-to-texture/${taskId}`, {
         headers: {
           'Authorization': `Bearer ${process.env.MESHY_API_KEY}`,
         },
