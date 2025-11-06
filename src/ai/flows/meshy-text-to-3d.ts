@@ -37,7 +37,7 @@ const meshyTextTo3DFlow = ai.defineFlow(
     }
 
     // Create task
-    const createResponse = await fetch('https://api.meshy.ai/v2/text-to-texture', {
+    const createResponse = await fetch('https://api.meshy.ai/v2/text-to-3d', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.MESHY_API_KEY}`,
@@ -45,8 +45,6 @@ const meshyTextTo3DFlow = ai.defineFlow(
       },
       body: JSON.stringify({
         prompt: input.prompt,
-        object_prompt: "a keychain",
-        style_prompt: "a keychain",
         art_style: 'realistic',
         mode: 'preview', // or 'refine'
       }),
@@ -57,7 +55,11 @@ const meshyTextTo3DFlow = ai.defineFlow(
       throw new Error(`Meshy API error (create): ${createResponse.statusText} - ${errorText}`);
     }
 
-    const { result: taskId } = await createResponse.json();
+    const { task_id: taskId } = await createResponse.json();
+
+    if (!taskId) {
+      throw new Error('Meshy API did not return a task_id.');
+    }
 
     // Poll for result
     let status = 'IN_PROGRESS';
@@ -65,7 +67,7 @@ const meshyTextTo3DFlow = ai.defineFlow(
 
     while (status === 'IN_PROGRESS' || status === 'PENDING') {
       await sleep(5000); // Wait for 5 seconds before checking again
-      const checkResponse = await fetch(`https://api.meshy.ai/v2/text-to-texture/${taskId}`, {
+      const checkResponse = await fetch(`https://api.meshy.ai/v2/text-to-3d/${taskId}`, {
         headers: {
           'Authorization': `Bearer ${process.env.MESHY_API_KEY}`,
         },
@@ -81,8 +83,14 @@ const meshyTextTo3DFlow = ai.defineFlow(
     }
 
     if (status === 'SUCCEEDED') {
+      const modelUrl = result.model_urls?.glb;
+
+      if (!modelUrl) {
+        throw new Error('Meshy task succeeded but no GLB model URL was returned.');
+      }
+
       return {
-        modelUrl: result.model_urls.glb,
+        modelUrl,
         taskId,
       };
     } else {
