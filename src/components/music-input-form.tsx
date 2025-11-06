@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useRef, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { generateKeychainAction, type FormState } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,7 +25,7 @@ function SubmitButton() {
 }
 
 export function MusicInputForm({ onStateChange }: { onStateChange: (state: FormState, pending: boolean) => void }) {
-  const [state, formAction] = useFormState(generateKeychainAction, {});
+  const [state, formAction] = useActionState(generateKeychainAction, {});
   const { pending } = useFormStatus();
   const formRef = useRef<HTMLFormElement>(null);
   
