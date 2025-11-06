@@ -57,6 +57,7 @@ const meshyTextTo3DFlow = ai.defineFlow(
 
     const createPayload = await createResponse.json();
     const taskId =
+      createPayload?.result ??
       createPayload?.task_id ??
       createPayload?.taskId ??
       createPayload?.id ??
