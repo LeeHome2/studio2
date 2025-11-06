@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { type FormState } from '@/app/actions';
 import { MusicInputForm } from '@/components/music-input-form';
 import { KeychainViewer } from '@/components/keychain-viewer';
 import { Loader } from '@/components/loader';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Bot } from 'lucide-react';
 
 export type ModelData = {
   prompt: string;
@@ -16,6 +18,7 @@ export default function KeychainGenerator() {
   const [modelData, setModelData] = useState<ModelData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loaderText, setLoaderText] = useState('Analyzing Music...');
+  const [latestPrompt, setLatestPrompt] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFormStateChange = useCallback((state: FormState, pending: boolean) => {
@@ -26,6 +29,7 @@ export default function KeychainGenerator() {
         setLoaderText('Analyzing Music...');
       } else {
         setLoaderText('Generating 3D Model...');
+        setLatestPrompt(state.prompt);
       }
       return;
     }
@@ -44,12 +48,23 @@ export default function KeychainGenerator() {
         modelUrl: state.modelUrl,
       };
       setModelData(newModelData);
+      setLatestPrompt(state.prompt);
       toast({
         title: 'Keychain Generated!',
         description: 'Your unique 3D model is ready.',
       });
     }
   }, [toast]);
+  
+  const DisplayPrompt = useMemo(() => {
+    if (isLoading && loaderText.startsWith('Generating')) {
+      return latestPrompt;
+    }
+    if (!isLoading && modelData) {
+      return modelData.prompt;
+    }
+    return null;
+  }, [isLoading, loaderText, modelData, latestPrompt]);
 
 
   return (
@@ -65,6 +80,17 @@ export default function KeychainGenerator() {
             </p>
           </div>
           <MusicInputForm onStateChange={handleFormStateChange} />
+          {DisplayPrompt && (
+            <Card className="bg-card/50">
+              <CardHeader className="flex-row items-center gap-3 space-y-0 pb-2">
+                <Bot className="h-6 w-6 text-accent" />
+                <CardTitle className="text-lg text-accent">AI-Generated Prompt</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{DisplayPrompt}</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
         <div className="relative aspect-square min-h-[300px] rounded-lg border-2 border-dashed border-border bg-card/50 shadow-inner">
           {isLoading && (

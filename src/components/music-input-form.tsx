@@ -15,7 +15,7 @@ function SubmitButton() {
     <Button 
       type="submit" 
       size="lg" 
-      className="w-full font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90 animate-neon-pulse"
+      className="w-full font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90"
       disabled={pending}
     >
       <WandSparkles className={cn("mr-2 h-5 w-5", pending && "animate-spin")} />
@@ -34,10 +34,15 @@ export function MusicInputForm({ onStateChange }: { onStateChange: (state: FormS
   }, [state, pending, onStateChange]);
 
   useEffect(() => {
-    if(state.prompt) {
-      formRef.current?.reset();
+    if(!pending && (state.prompt || state.error)) {
+        // Reset form only after submission is complete (success or error)
+        // and if there's a prompt or an error to display.
+        // This prevents resetting during the 'Generating 3d model' phase.
+        if (state.prompt) {
+            formRef.current?.reset();
+        }
     }
-  }, [state.prompt]);
+  }, [state.prompt, state.error, pending]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
@@ -51,7 +56,7 @@ export function MusicInputForm({ onStateChange }: { onStateChange: (state: FormS
           required
           aria-describedby="musicInfo-error"
         />
-        {state.error && <p id="musicInfo-error" className="text-sm text-destructive">{state.error}</p>}
+        {state.error && !pending && <p id="musicInfo-error" className="text-sm text-destructive">{state.error}</p>}
       </div>
       <SubmitButton />
     </form>

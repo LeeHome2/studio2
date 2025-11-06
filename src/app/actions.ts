@@ -30,20 +30,30 @@ export async function generateKeychainAction(
     };
   }
 
+  let musicAnalysis;
   try {
-    const musicAnalysis = await analyzeMusicAndGeneratePrompt({
+    musicAnalysis = await analyzeMusicAndGeneratePrompt({
       musicInfo: validatedFields.data.musicInfo,
     });
+  } catch(e: any) {
+    console.error('Error in music analysis step:', e);
+    return { error: e.message || 'An unexpected error occurred while analyzing the music.' };
+  }
     
-    const meshyResult = await meshyTextTo3D({ prompt: musicAnalysis.prompt });
+  // Return intermediate state so UI can update with the prompt
+  const intermediateState: FormState = { prompt: musicAnalysis.prompt, timestamp: Date.now() };
 
+  try {
+    const meshyResult = await meshyTextTo3D({ prompt: musicAnalysis.prompt });
     return { 
-      prompt: musicAnalysis.prompt, 
+      ...intermediateState,
       modelUrl: meshyResult.modelUrl,
-      timestamp: Date.now() 
     };
   } catch (e: any) {
-    console.error('Error in generateKeychainAction:', e);
-    return { error: e.message || 'An unexpected error occurred while generating the model. Please try again later.' };
+    console.error('Error in 3D generation step:', e);
+    return { 
+        ...intermediateState,
+        error: e.message || 'An unexpected error occurred while generating the model. Please try again later.' 
+    };
   }
 }
