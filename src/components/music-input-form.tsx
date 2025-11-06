@@ -15,7 +15,7 @@ function SubmitButton() {
     <Button 
       type="submit" 
       size="lg" 
-      className="w-full font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90 animate-neon-pulse shadow-[0_0_15px_hsl(var(--accent_-_desaturated))] "
+      className="w-full font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90 animate-neon-pulse"
       disabled={pending}
     >
       <WandSparkles className={cn("mr-2 h-5 w-5", pending && "animate-spin")} />

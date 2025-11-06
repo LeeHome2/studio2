@@ -97,7 +97,7 @@ export default {
         },
         'neon-pulse': {
           '50%': {
-            boxShadow: '0 0 5px hsl(var(--accent)), 0 0 10px hsl(var(--accent)), 0 0 15px hsl(var(--accent))',
+            boxShadow: '0 0 12px hsl(var(--accent))',
           }
         },
       },
