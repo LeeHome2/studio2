@@ -2,6 +2,7 @@
 'use server';
 
 import { analyzeMusicAndGeneratePrompt } from '@/ai/flows/analyze-music-and-generate-prompt';
+import { meshyTextTo3D } from '@/ai/flows/meshy-text-to-3d';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -10,6 +11,7 @@ const formSchema = z.object({
 
 export type FormState = {
   prompt?: string;
+  modelUrl?: string;
   error?: string;
   timestamp?: number;
 };
@@ -29,12 +31,19 @@ export async function generateKeychainAction(
   }
 
   try {
-    const result = await analyzeMusicAndGeneratePrompt({
+    const musicAnalysis = await analyzeMusicAndGeneratePrompt({
       musicInfo: validatedFields.data.musicInfo,
     });
-    return { prompt: result.prompt, timestamp: Date.now() };
-  } catch (e) {
+    
+    const meshyResult = await meshyTextTo3D({ prompt: musicAnalysis.prompt });
+
+    return { 
+      prompt: musicAnalysis.prompt, 
+      modelUrl: meshyResult.modelUrl,
+      timestamp: Date.now() 
+    };
+  } catch (e: any) {
     console.error('Error in generateKeychainAction:', e);
-    return { error: 'An unexpected error occurred while generating the prompt. Please try again later.' };
+    return { error: e.message || 'An unexpected error occurred while generating the model. Please try again later.' };
   }
 }
